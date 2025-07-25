@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from flask import Flask, render_template, request, session
 from flask_socketio import SocketIO, emit, join_room, leave_room
@@ -29,7 +30,7 @@ active_users: dict[str, dict] = {}
 
 
 @app.route("/")
-def index():
+def index() -> str:
   if "username" not in session:
     session["username"] = generate_guest_username()
     logger.info(f"New user session created: {session['username']}")
@@ -40,7 +41,7 @@ def index():
 
 
 @socketio.event
-def connect():
+def connect() -> None | Literal[False]:
   try:
     if "username" not in session:
       session["username"] = generate_guest_username()
@@ -83,7 +84,7 @@ def disconnect():
 
 
 @socketio.on("join")
-def on_join(data: dict):
+def on_join(data: dict) -> None:
   try:
     username = session["username"]
     room = data["room"]
@@ -112,7 +113,7 @@ def on_join(data: dict):
 
 
 @socketio.on("leave")
-def on_leave(data: dict):
+def on_leave(data: dict) -> None:
   try:
     username = session["username"]
     room = data["room"]
@@ -138,7 +139,7 @@ def on_leave(data: dict):
 
 
 @socketio.on("message")
-def handle_message(data: dict):
+def handle_message(data: dict) -> None:
   try:
     username = session["username"]
     room = data.get("room", "General")
