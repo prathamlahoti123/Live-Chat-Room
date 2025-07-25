@@ -3,11 +3,10 @@ from typing import Literal
 
 from flask import Flask, render_template, request, session
 from flask_socketio import SocketIO, emit, join_room, leave_room
+from logger import logger
+from settings import Config
+from utils import generate_guest_username
 from werkzeug.middleware.proxy_fix import ProxyFix
-
-from app.logging import logger
-from app.settings import Config
-from app.utils import generate_guest_username
 
 # Initialize Flask app
 app = Flask(__name__)
