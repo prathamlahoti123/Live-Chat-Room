@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Dict
 
 from flask import Flask, render_template, request, session
 from flask_socketio import SocketIO, emit, join_room, leave_room
@@ -26,7 +25,7 @@ socketio = SocketIO(
 
 # In-memory storage for active users
 # In production, consider using Redis or another distributed storage
-active_users: Dict[str, dict] = {}
+active_users: dict[str, dict] = {}
 
 
 @app.route("/")
