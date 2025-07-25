@@ -1,7 +1,6 @@
 # Imports here
 import logging
 import os
-import random
 from datetime import datetime
 from typing import Dict
 
@@ -10,6 +9,7 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.settings import Config
+from app.utils import generate_guest_username
 
 # Config logging
 logging.basicConfig(
@@ -38,12 +38,6 @@ socketio = SocketIO(
 # In-memory storage for active users
 # In production, consider using Redis or another distributed storage
 active_users: Dict[str, dict] = {}
-
-
-def generate_guest_username() -> str:
-  """Generate a unique guest username with timestamp to avoid collisions"""
-  timestamp = datetime.now().strftime("%H%M")
-  return f"Guest{timestamp}{random.randint(1000, 9999)}"
 
 
 @app.route("/")
