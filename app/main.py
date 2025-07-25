@@ -1,5 +1,3 @@
-# Imports here
-import logging
 import os
 from datetime import datetime
 from typing import Dict
@@ -8,17 +6,9 @@ from flask import Flask, render_template, request, session
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from app.logging import logger
 from app.settings import Config
 from app.utils import generate_guest_username
-
-# Config logging
-logging.basicConfig(
-  level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
-
-# App Configuration Settings
-
 
 # Initialize Flask app
 app = Flask(__name__)
