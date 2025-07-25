@@ -24,7 +24,6 @@ socketio = SocketIO(
 )
 
 # In-memory storage for active users
-# In production, consider using Redis or another distributed storage
 active_users: dict[str, dict] = {}
 
 
