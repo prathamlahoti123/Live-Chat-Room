@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 from typing import Dict
 
@@ -195,11 +194,10 @@ def handle_message(data: dict):
 
 if __name__ == "__main__":
   # In production, use gunicorn or uwsgi instead
-  port = int(os.environ.get("PORT", 5000))
   socketio.run(
     app,
-    host="0.0.0.0",
-    port=port,
+    host=app.config["HOST"],
+    port=app.config["PORT"],
     debug=app.config["DEBUG"],
     use_reloader=app.config["DEBUG"],
   )
