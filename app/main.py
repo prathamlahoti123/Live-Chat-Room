@@ -101,43 +101,39 @@ def leave(data: dict) -> None:
 
 @socketio.on("message")
 def handle_message(data: dict) -> None:
-  try:
-    username = session["username"]
-    room = data.get("room", "General")
-    msg_type = data.get("type", "message")
-    message = data.get("msg", "").strip()
+  username = session["username"]
+  room = data.get("room", "General")
+  msg_type = data.get("type", "message")
+  message = data.get("msg", "").strip()
 
-    if not message:
+  if not message:
+    return
+
+  if msg_type == "private":
+    # Handle private messages
+    target_user = data.get("target")
+    if not target_user:
       return
 
-    if msg_type == "private":
-      # Handle private messages
-      target_user = data.get("target")
-      if not target_user:
+    for sid, user_data in active_users.items():
+      if user_data["username"] == target_user:
+        private_message = PrivateMessage(msg=message, from_=username, to=target_user)
+        emit("private_message", asdict(private_message), room=sid)
+        logger.info(f"Private message sent: {username} -> {target_user}")
         return
 
-      for sid, user_data in active_users.items():
-        if user_data["username"] == target_user:
-          private_message = PrivateMessage(msg=message, from_=username, to=target_user)
-          emit("private_message", asdict(private_message), room=sid)
-          logger.info(f"Private message sent: {username} -> {target_user}")
-          return
+    logger.warning(f"Private message failed - user not found: {target_user}")
 
-      logger.warning(f"Private message failed - user not found: {target_user}")
+  else:
+    # Regular room message
+    if room not in app.config["CHAT_ROOMS"]:
+      logger.warning(f"Message to invalid room: {room}")
+      return
 
-    else:
-      # Regular room message
-      if room not in app.config["CHAT_ROOMS"]:
-        logger.warning(f"Message to invalid room: {room}")
-        return
+    public_message = PublicMessage(msg=message, username=username, room=room)
+    emit("message", asdict(public_message), room=room)
 
-      public_message = PublicMessage(msg=message, username=username, room=room)
-      emit("message", asdict(public_message), room=room)
-
-      logger.info(f"Message sent in {room} by {username}")
-
-  except Exception as e:
-    logger.error(f"Message handling error: {str(e)}")
+    logger.info(f"Message sent in {room} by {username}")
 
 
 if __name__ == "__main__":
