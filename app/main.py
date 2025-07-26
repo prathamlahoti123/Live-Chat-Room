@@ -1,11 +1,10 @@
 from dataclasses import asdict
-from datetime import datetime
 from typing import Literal
 
 from flask import Flask, render_template, request, session
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from logger import logger
-from schemas import PrivateMessage, StatusMessage, User
+from schemas import PrivateMessage, PublicMessage, StatusMessage, User
 from settings import Config
 from utils import generate_guest_username
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -133,8 +132,6 @@ def handle_message(data: dict) -> None:
     if not message:
       return
 
-    timestamp = datetime.now().isoformat()
-
     if msg_type == "private":
       # Handle private messages
       target_user = data.get("target")
@@ -156,11 +153,8 @@ def handle_message(data: dict) -> None:
         logger.warning(f"Message to invalid room: {room}")
         return
 
-      emit(
-        "message",
-        {"msg": message, "username": username, "room": room, "timestamp": timestamp},
-        room=room,
-      )
+      public_message = PublicMessage(msg=message, username=username, room=room)
+      emit("message", asdict(public_message), room=room)
 
       logger.info(f"Message sent in {room} by {username}")
 
