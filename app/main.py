@@ -5,7 +5,7 @@ from typing import Literal
 from flask import Flask, render_template, request, session
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from logger import logger
-from schemas import StatusMessage, User
+from schemas import PrivateMessage, StatusMessage, User
 from settings import Config
 from utils import generate_guest_username
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -143,16 +143,8 @@ def handle_message(data: dict) -> None:
 
       for sid, user_data in active_users.items():
         if user_data["username"] == target_user:
-          emit(
-            "private_message",
-            {
-              "msg": message,
-              "from": username,
-              "to": target_user,
-              "timestamp": timestamp,
-            },
-            room=sid,
-          )
+          private_message = PrivateMessage(msg=message, from_=username, to=target_user)
+          emit("private_message", asdict(private_message), room=sid)
           logger.info(f"Private message sent: {username} -> {target_user}")
           return
 
