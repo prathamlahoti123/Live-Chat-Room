@@ -18,7 +18,7 @@ socket.on('message', (data) => {
 });
 
 socket.on('private_message', (data) => {
-  addMessage(data.from, `[Private] ${data.msg}`, 'private');
+  addMessage(data.from_, `[Private] ${data.msg}`, 'private');
 });
 
 socket.on('status', (data) => {
