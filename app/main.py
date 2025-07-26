@@ -5,7 +5,7 @@ from typing import Literal
 from flask import Flask, render_template, request, session
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from logger import logger
-from schemas import User
+from schemas import StatusMessage, User
 from settings import Config
 from utils import generate_guest_username
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -94,15 +94,8 @@ def on_join(data: dict) -> None:
     join_room(room)
     active_users[request.sid]["room"] = room
 
-    emit(
-      "status",
-      {
-        "msg": f"{username} has joined the room.",
-        "type": "join",
-        "timestamp": datetime.now().isoformat(),
-      },
-      room=room,
-    )
+    message = StatusMessage(msg=f"{username} has joined the room.")
+    emit("status", asdict(message), room=room)
 
     logger.info(f"User {username} joined room: {room}")
 
@@ -120,15 +113,8 @@ def on_leave(data: dict) -> None:
     if request.sid in active_users:
       active_users[request.sid].pop("room", None)
 
-    emit(
-      "status",
-      {
-        "msg": f"{username} has left the room.",
-        "type": "leave",
-        "timestamp": datetime.now().isoformat(),
-      },
-      room=room,
-    )
+    message = StatusMessage(msg=f"{username} has left the room.", type="leave")
+    emit("status", asdict(message), room=room)
 
     logger.info(f"User {username} left room: {room}")
 
