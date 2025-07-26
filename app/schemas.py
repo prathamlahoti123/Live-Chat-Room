@@ -18,3 +18,13 @@ class StatusMessage:
   msg: str
   type: Literal["join", "leave"] = "join"
   timestamp: str = datetime.now().isoformat()
+
+
+@dataclass
+class PrivateMessage:
+  """Schema to represent info about private message."""
+
+  msg: str
+  from_: str
+  to: str
+  timestamp: str = datetime.now().isoformat()
