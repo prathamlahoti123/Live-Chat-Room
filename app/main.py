@@ -61,22 +61,16 @@ def connect() -> None:
 
 
 @socketio.event
-def disconnect():
-  try:
-    if request.sid in active_users:
-      username = active_users[request.sid]["username"]
-      del active_users[request.sid]
-
-      emit(
-        "active_users",
-        {"users": [user["username"] for user in active_users.values()]},
-        broadcast=True,
-      )
-
-      logger.info(f"User disconnected: {username}")
-
-  except Exception as e:
-    logger.error(f"Disconnection error: {str(e)}")
+def disconnect() -> None:
+  if request.sid in active_users:
+    username = active_users[request.sid]["username"]
+    del active_users[request.sid]
+    emit(
+      "active_users",
+      {"users": [user["username"] for user in active_users.values()]},
+      broadcast=True,
+    )
+    logger.info(f"User disconnected: {username}")
 
 
 @socketio.event
