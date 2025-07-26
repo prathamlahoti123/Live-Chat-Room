@@ -1,5 +1,4 @@
 from dataclasses import asdict
-from typing import Literal
 
 from flask import Flask, render_template, request, session
 from flask_socketio import SocketIO, emit, join_room, leave_room
@@ -48,25 +47,17 @@ def index() -> str:
 
 
 @socketio.event
-def connect() -> None | Literal[False]:
-  try:
-    if "username" not in session:
-      session["username"] = generate_guest_username()
-
-    user = User(username=session["username"])
-    active_users[request.sid] = asdict(user)
-
-    emit(
-      "active_users",
-      {"users": [user["username"] for user in active_users.values()]},
-      broadcast=True,
-    )
-
-    logger.info(f"User connected: {user.username}")
-
-  except Exception as e:
-    logger.error(f"Connection error: {str(e)}")
-    return False
+def connect() -> None:
+  if "username" not in session:
+    session["username"] = generate_guest_username()
+  user = User(username=session["username"])
+  active_users[request.sid] = asdict(user)
+  emit(
+    "active_users",
+    {"users": [user["username"] for user in active_users.values()]},
+    broadcast=True,
+  )
+  logger.info(f"User connected: {user.username}")
 
 
 @socketio.event
