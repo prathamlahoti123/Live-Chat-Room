@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Literal
 
 
 @dataclass
@@ -8,3 +9,12 @@ class User:
 
   username: str
   connected_at: str = datetime.now().isoformat()
+
+
+@dataclass
+class StatusMessage:
+  """Schema to represent a chat join status message."""
+
+  msg: str
+  type: Literal["join", "leave"] = "join"
+  timestamp: str = datetime.now().isoformat()
