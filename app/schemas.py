@@ -28,3 +28,13 @@ class PrivateMessage:
   from_: str
   to: str
   timestamp: str = datetime.now().isoformat()
+
+
+@dataclass
+class PublicMessage:
+  """Schema to represent info about public message."""
+
+  msg: str
+  username: str
+  room: str
+  timestamp: str = datetime.now().isoformat()
