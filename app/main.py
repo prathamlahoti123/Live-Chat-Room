@@ -1,9 +1,11 @@
+from dataclasses import asdict
 from datetime import datetime
 from typing import Literal
 
 from flask import Flask, render_template, request, session
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from logger import logger
+from schemas import User
 from settings import Config
 from utils import generate_guest_username
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -19,8 +21,8 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 socketio = SocketIO(
   app,
   cors_allowed_origins=app.config["CORS_ORIGINS"],
-  logger=True,
-  engineio_logger=True,
+  # logger=True,
+  # engineio_logger=True,
 )
 
 # In-memory storage for active users
@@ -44,10 +46,8 @@ def connect() -> None | Literal[False]:
     if "username" not in session:
       session["username"] = generate_guest_username()
 
-    active_users[request.sid] = {
-      "username": session["username"],
-      "connected_at": datetime.now().isoformat(),
-    }
+    user = User(username=session["username"])
+    active_users[request.sid] = asdict(user)
 
     emit(
       "active_users",
@@ -55,7 +55,7 @@ def connect() -> None | Literal[False]:
       broadcast=True,
     )
 
-    logger.info(f"User connected: {session['username']}")
+    logger.info(f"User connected: {user.username}")
 
   except Exception as e:
     logger.error(f"Connection error: {str(e)}")
