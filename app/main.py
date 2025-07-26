@@ -89,21 +89,14 @@ def join(data: dict) -> None:
 
 @socketio.event
 def leave(data: dict) -> None:
-  try:
-    username = session["username"]
-    room = data["room"]
-
-    leave_room(room)
-    if request.sid in active_users:
-      active_users[request.sid].pop("room", None)
-
-    message = StatusMessage(msg=f"{username} has left the room.", type="leave")
-    emit("status", asdict(message), room=room)
-
-    logger.info(f"User {username} left room: {room}")
-
-  except Exception as e:
-    logger.error(f"Leave room error: {str(e)}")
+  username = session["username"]
+  room = data["room"]
+  leave_room(room)
+  if request.sid in active_users:
+    active_users[request.sid].pop("room", None)
+  message = StatusMessage(msg=f"{username} has left the room.", type="leave")
+  emit("status", asdict(message), room=room)
+  logger.info(f"User {username} left room: {room}")
 
 
 @socketio.on("message")
