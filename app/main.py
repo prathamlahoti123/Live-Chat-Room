@@ -75,24 +75,16 @@ def disconnect() -> None:
 
 @socketio.event
 def join(data: dict) -> None:
-  try:
-    username = session["username"]
-    room = data["room"]
-
-    if room not in app.config["CHAT_ROOMS"]:
-      logger.warning(f"Invalid room join attempt: {room}")
-      return
-
-    join_room(room)
-    active_users[request.sid]["room"] = room
-
-    message = StatusMessage(msg=f"{username} has joined the room.")
-    emit("status", asdict(message), room=room)
-
-    logger.info(f"User {username} joined room: {room}")
-
-  except Exception as e:
-    logger.error(f"Join room error: {str(e)}")
+  username = session["username"]
+  room = data["room"]
+  if room not in app.config["CHAT_ROOMS"]:
+    logger.warning(f"Invalid room join attempt: {room}")
+    return
+  join_room(room)
+  active_users[request.sid]["room"] = room
+  message = StatusMessage(msg=f"{username} has joined the room.")
+  emit("status", asdict(message), room=room)
+  logger.info(f"User {username} joined room: {room}")
 
 
 @socketio.event
