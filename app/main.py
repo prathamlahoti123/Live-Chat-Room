@@ -25,6 +25,13 @@ socketio = SocketIO(
   # engineio_logger=True,
 )
 
+
+@socketio.on_error_default
+def default_error_handler(e: Exception) -> None:
+  """Handle all namespaces without an explicit error handler."""
+  logger.error(f"Websocket error: {str(e)}")
+
+
 # In-memory storage for active users
 active_users: dict[str, dict] = {}
 
@@ -81,8 +88,8 @@ def disconnect():
     logger.error(f"Disconnection error: {str(e)}")
 
 
-@socketio.on("join")
-def on_join(data: dict) -> None:
+@socketio.event
+def join(data: dict) -> None:
   try:
     username = session["username"]
     room = data["room"]
@@ -103,8 +110,8 @@ def on_join(data: dict) -> None:
     logger.error(f"Join room error: {str(e)}")
 
 
-@socketio.on("leave")
-def on_leave(data: dict) -> None:
+@socketio.event
+def leave(data: dict) -> None:
   try:
     username = session["username"]
     room = data["room"]
