@@ -101,13 +101,12 @@ def leave(data: dict) -> None:
 
 @socketio.on("message")
 def handle_message(data: dict) -> None:
-  username = session["username"]
-  room = data.get("room", "General")
-  msg_type = data.get("type", "message")
   message = data.get("msg", "").strip()
-
   if not message:
     return
+
+  username = session["username"]
+  msg_type = data.get("type", "message")
 
   if msg_type == "private":
     # Handle private messages
@@ -126,6 +125,7 @@ def handle_message(data: dict) -> None:
 
   else:
     # Regular room message
+    room = data.get("room", "General")
     if room not in app.config["CHAT_ROOMS"]:
       logger.warning(f"Message to invalid room: {room}")
       return
