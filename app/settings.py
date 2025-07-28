@@ -12,4 +12,4 @@ class Config:
   PORT: int = int(os.getenv("PORT", "5000"))
 
   # Available chat rooms - stored as constant for now, could be moved to database
-  CHAT_ROOMS = ["General", "Zero to Knowing", "Code with Josh", "The Nerd Nook"]
+  CHAT_ROOMS = ["General", "News", "Sport", "Engineering"]
