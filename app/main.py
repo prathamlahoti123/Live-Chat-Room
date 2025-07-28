@@ -32,7 +32,7 @@ def default_error_handler(e: Exception) -> None:
 
 
 # In-memory storage
-db: dict[str, dict] = {}
+db: dict[str, dict] = {"users": {}}
 
 
 @app.route("/")
@@ -51,10 +51,10 @@ def connect() -> None:
   if "username" not in session:
     session["username"] = generate_guest_username()
   user = User(username=session["username"])
-  db[request.sid] = asdict(user)
+  db["users"][request.sid] = asdict(user)
   emit(
     "active_users",
-    {"users": [user["username"] for user in db.values()]},
+    {"users": [user["username"] for user in db["users"].values()]},
     broadcast=True,
   )
   logger.info(f"User connected: {user.username}")
@@ -62,12 +62,12 @@ def connect() -> None:
 
 @socketio.event
 def disconnect() -> None:
-  if request.sid in db:
-    username = db[request.sid]["username"]
-    del db[request.sid]
+  if request.sid in db["users"]:
+    username = db["users"][request.sid]["username"]
+    del db["users"][request.sid]
     emit(
       "active_users",
-      {"users": [user["username"] for user in db.values()]},
+      {"users": [user["username"] for user in db["users"].values()]},
       broadcast=True,
     )
     logger.info(f"User disconnected: {username}")
@@ -81,7 +81,7 @@ def join(data: dict) -> None:
     logger.warning(f"Invalid room join attempt: {room}")
     return
   join_room(room)
-  db[request.sid]["room"] = room
+  db["users"][request.sid]["room"] = room
   message = StatusMessage(msg=f"{username} has joined the room.")
   emit("status", asdict(message), room=room)
   logger.info(f"User {username} joined room: {room}")
@@ -92,8 +92,8 @@ def leave(data: dict) -> None:
   username = session["username"]
   room = data["room"]
   leave_room(room)
-  if request.sid in db:
-    db[request.sid].pop("room", None)
+  if request.sid in db["users"]:
+    db["users"][request.sid].pop("room", None)
   message = StatusMessage(msg=f"{username} has left the room.", type="leave")
   emit("status", asdict(message), room=room)
   logger.info(f"User {username} left room: {room}")
@@ -114,7 +114,7 @@ def handle_message(data: dict) -> None:
     if not target_user:
       return
 
-    for sid, user_data in db.items():
+    for sid, user_data in db["users"].items():
       if user_data["username"] == target_user:
         private_message = PrivateMessage(msg=message, from_=username, to=target_user)
         emit("private_message", asdict(private_message), room=sid)
