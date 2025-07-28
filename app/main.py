@@ -28,7 +28,7 @@ socketio = SocketIO(
 @socketio.on_error_default
 def default_error_handler(e: Exception) -> None:
   """Handle all namespaces without an explicit error handler."""
-  logger.error(f"Websocket error: {str(e)}")
+  logger.error("Websocket error: %s", str(e))
 
 
 # In-memory storage
@@ -39,7 +39,7 @@ db: dict[str, dict] = {"users": {}, "rooms": [*app.config["CHAT_ROOMS"]]}
 def index() -> str:
   if "username" not in session:
     session["username"] = generate_guest_username()
-    logger.info(f"New user session created: {session['username']}")
+    logger.info("New user session created: %s", session["username"])
   return render_template("index.html", username=session["username"], rooms=db["rooms"])
 
 
@@ -54,34 +54,35 @@ def connect() -> None:
     {"users": [user["username"] for user in db["users"].values()]},
     broadcast=True,
   )
-  logger.info(f"User connected: {user.username}")
+  logger.info("User connected: %s", user.username)
 
 
 @socketio.event
-def disconnect() -> None:
-  if request.sid in db["users"]:
-    username = db["users"][request.sid]["username"]
-    del db["users"][request.sid]
-    emit(
-      "active_users",
-      {"users": [user["username"] for user in db["users"].values()]},
-      broadcast=True,
-    )
-    logger.info(f"User disconnected: {username}")
+def disconnect(reason: str) -> None:
+  print("REASON: ", reason)
+  if request.sid not in db["users"]:
+    return
+  username = db["users"][request.sid]["username"]
+  del db["users"][request.sid]
+  emit(
+    "active_users",
+    {"users": [user["username"] for user in db["users"].values()]},
+    broadcast=True,
+  )
+  logger.info("User disconnected: %s. Reason: %s", username, reason)
 
 
 @socketio.event
 def join(data: dict) -> None:
-  username = session["username"]
-  room = data["room"]
-  if room not in db["rooms"]:
+  if room := data["room"] not in db["rooms"]:
     logger.warning(f"Invalid room join attempt: {room}")
     return
   join_room(room)
   db["users"][request.sid]["room"] = room
+  username = session["username"]
   message = StatusMessage(msg=f"{username} has joined the room.")
   emit("status", asdict(message), room=room)
-  logger.info(f"User {username} joined room: {room}")
+  logger.info("User %s joined room: %s", username, room)
 
 
 @socketio.event
@@ -93,7 +94,7 @@ def leave(data: dict) -> None:
     db["users"][request.sid].pop("room", None)
   message = StatusMessage(msg=f"{username} has left the room.", type="leave")
   emit("status", asdict(message), room=room)
-  logger.info(f"User {username} left room: {room}")
+  logger.info("User %s left room: %s", username, room)
 
 
 @socketio.on("message")
@@ -114,19 +115,19 @@ def handle_message(data: dict) -> None:
       if user_data["username"] == target_user:
         private_message = PrivateMessage(msg=message, from_=username, to=target_user)
         emit("private_message", asdict(private_message), room=sid)
-        logger.info(f"Private message sent: {username} -> {target_user}")
+        logger.info("Private message sent: %s -> %s", username, target_user)
         return
-    logger.warning(f"Private message failed - user not found: {target_user}")
+    logger.warning("Private message failed - user not found: %", target_user)
 
   else:
     # Regular room message
     room = data.get("room", "General")
     if room not in db["rooms"]:
-      logger.warning(f"Message to invalid room: {room}")
+      logger.warning("Message to invalid room: %s", room)
       return
     public_message = PublicMessage(msg=message, username=username, room=room)
     emit("message", asdict(public_message), room=room)
-    logger.info(f"Message sent in {room} by {username}")
+    logger.info("Message sent in %s by %s", room, username)
 
 
 if __name__ == "__main__":
