@@ -124,7 +124,6 @@ def handle_message(data: dict) -> None:
     if room not in db["rooms"]:
       logger.warning(f"Message to invalid room: {room}")
       return
-
     public_message = PublicMessage(msg=message, username=username, room=room)
     emit("message", asdict(public_message), room=room)
     logger.info(f"Message sent in {room} by {username}")
