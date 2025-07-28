@@ -32,7 +32,7 @@ def default_error_handler(e: Exception) -> None:
 
 
 # In-memory storage
-db: dict[str, dict] = {"users": {}}
+db: dict[str, dict] = {"users": {}, "rooms": [*app.config["CHAT_ROOMS"]]}
 
 
 @app.route("/")
@@ -41,9 +41,7 @@ def index() -> str:
     session["username"] = generate_guest_username()
     logger.info(f"New user session created: {session['username']}")
 
-  return render_template(
-    "index.html", username=session["username"], rooms=app.config["CHAT_ROOMS"]
-  )
+  return render_template("index.html", username=session["username"], rooms=db["rooms"])
 
 
 @socketio.event
@@ -77,7 +75,7 @@ def disconnect() -> None:
 def join(data: dict) -> None:
   username = session["username"]
   room = data["room"]
-  if room not in app.config["CHAT_ROOMS"]:
+  if room not in db["rooms"]:
     logger.warning(f"Invalid room join attempt: {room}")
     return
   join_room(room)
@@ -126,7 +124,7 @@ def handle_message(data: dict) -> None:
   else:
     # Regular room message
     room = data.get("room", "General")
-    if room not in app.config["CHAT_ROOMS"]:
+    if room not in db["rooms"]:
       logger.warning(f"Message to invalid room: {room}")
       return
 
