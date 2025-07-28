@@ -40,7 +40,6 @@ def index() -> str:
   if "username" not in session:
     session["username"] = generate_guest_username()
     logger.info(f"New user session created: {session['username']}")
-
   return render_template("index.html", username=session["username"], rooms=db["rooms"])
 
 
@@ -111,14 +110,12 @@ def handle_message(data: dict) -> None:
     target_user = data.get("target")
     if not target_user:
       return
-
     for sid, user_data in db["users"].items():
       if user_data["username"] == target_user:
         private_message = PrivateMessage(msg=message, from_=username, to=target_user)
         emit("private_message", asdict(private_message), room=sid)
         logger.info(f"Private message sent: {username} -> {target_user}")
         return
-
     logger.warning(f"Private message failed - user not found: {target_user}")
 
   else:
@@ -130,7 +127,6 @@ def handle_message(data: dict) -> None:
 
     public_message = PublicMessage(msg=message, username=username, room=room)
     emit("message", asdict(public_message), room=room)
-
     logger.info(f"Message sent in {room} by {username}")
 
 
