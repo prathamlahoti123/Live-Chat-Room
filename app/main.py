@@ -59,7 +59,6 @@ def connect() -> None:
 
 @socketio.event
 def disconnect(reason: str) -> None:
-  print("REASON: ", reason)
   if request.sid not in db["users"]:
     return
   username = db["users"][request.sid]["username"]
@@ -74,7 +73,8 @@ def disconnect(reason: str) -> None:
 
 @socketio.event
 def join(data: dict) -> None:
-  if room := data["room"] not in db["rooms"]:
+  room = data["room"]
+  if room not in db["rooms"]:
     logger.warning(f"Invalid room join attempt: {room}")
     return
   join_room(room)
