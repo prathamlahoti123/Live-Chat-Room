@@ -6,7 +6,6 @@ let roomMessages = {};
 // Socket event listeners
 socket.on('connect', () => {
   joinRoom('General');
-  highlightActiveRoom('General');
 });
 
 socket.on('message', (data) => {
@@ -43,13 +42,13 @@ function addMessage(sender, message, type) {
   if (!roomMessages[currentRoom]) {
     roomMessages[currentRoom] = [];
   }
-  roomMessages[currentRoom].push({ sender, message, type });
-
+  if (type !== "system") {
+    roomMessages[currentRoom].push({ sender, message, type });
+  }
   const chat = document.getElementById('chat');
   const messageDiv = document.createElement('div');
   messageDiv.className = `message ${type}`;
   messageDiv.textContent = `${sender}: ${message}`;
-
   chat.appendChild(messageDiv);
   chat.scrollTop = chat.scrollHeight;
 }
