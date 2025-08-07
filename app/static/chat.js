@@ -84,6 +84,7 @@ function sendMessage() {
 }
 
 function joinRoom(room) {
+  if (room === currentRoom) return false;
   socket.emit('leave', { room: currentRoom });
   currentRoom = room;
   socket.emit('join', { room });
