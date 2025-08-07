@@ -6,7 +6,7 @@ class Config:
   """Application configuration"""
 
   SECRET_KEY = os.getenv("SECRET_KEY", secrets.token_urlsafe(24))
-  DEBUG = os.getenv("FLASK_DEBUG", "False").lower() in ("true", "1", "t")
+  DEBUG = os.getenv("FLASK_DEBUG", "True").lower() in ("true", "1", "t")
   CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*")
   HOST: str = os.getenv("HOST", "0.0.0.0")
   PORT: int = int(os.getenv("PORT", "5000"))
