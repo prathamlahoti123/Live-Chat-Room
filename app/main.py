@@ -47,6 +47,8 @@ def index() -> str:
 def connect() -> None:
   if "username" not in session:
     session["username"] = generate_guest_username()
+  if "room" not in session:
+    session["room"] = app.config["CHAT_ROOMS"][0]
   user = User(username=session["username"])
   db["users"][request.sid] = asdict(user)
   emit(
@@ -75,11 +77,15 @@ def disconnect(reason: str) -> None:
 def join(data: dict) -> None:
   room = data["room"]
   if room not in db["rooms"]:
-    logger.warning(f"Invalid room join attempt: {room}")
+    logger.warning("Invalid room join attempt: %s", room)
+    return
+  username = session["username"]
+  if room == session["room"]:
+    logger.info("User %s room is already in %s room", username, room)
     return
   join_room(room)
+  session["room"] = room
   db["users"][request.sid]["room"] = room
-  username = session["username"]
   message = StatusMessage(msg=f"{username} has joined the room.")
   emit("status", asdict(message), room=room)
   logger.info("User %s joined room: %s", username, room)
