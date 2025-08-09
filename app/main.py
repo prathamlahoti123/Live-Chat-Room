@@ -2,12 +2,13 @@ from dataclasses import asdict
 
 from flask import Flask, render_template, request, session
 from flask_socketio import SocketIO, emit, join_room, leave_room
-from utils import generate_guest_username
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from app.logger import logger
-from app.schemas import PrivateMessage, PublicMessage, StatusMessage, User
-from app.settings import Config
+# ruff: noqa: I001
+from logger import logger
+from schemas import PrivateMessage, PublicMessage, StatusMessage, User
+from settings import Config
+from utils import generate_guest_username
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -137,11 +138,10 @@ def handle_message(data: dict) -> None:
 
 
 if __name__ == "__main__":
-  # In production, use gunicorn or uwsgi instead
   socketio.run(
     app,
-    host=app.config["HOST"],
-    port=app.config["PORT"],
+    host=app.config["APP_HOST"],
+    port=app.config["APP_PORT"],
     debug=app.config["DEBUG"],
     use_reloader=app.config["DEBUG"],
   )
