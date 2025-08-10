@@ -1,14 +1,14 @@
 from dataclasses import asdict
 from typing import TYPE_CHECKING, TypedDict, cast
 
-from flask import Flask, render_template, request as _request, session
+from flask import Flask, render_template, session
+from flask import request as _request
 from flask_socketio import SocketIO, emit, join_room, leave_room
 
-# ruff: noqa: I001
-from logger import logger
-from schemas import PrivateMessage, PublicMessage, StatusMessage, User
-from settings import Config
-from utils import generate_guest_username
+from app.logger import logger
+from app.schemas import PrivateMessage, PublicMessage, StatusMessage, User
+from app.settings import Config
+from app.utils import generate_guest_username
 
 if TYPE_CHECKING:
   from flask import Request
