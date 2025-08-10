@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Literal
 
 
@@ -8,7 +8,7 @@ class User:
   """Schema to represent info about user."""
 
   username: str
-  connected_at: str = datetime.now().isoformat()
+  connected_at: str = datetime.now(tz=UTC).isoformat()
 
 
 @dataclass
@@ -17,7 +17,7 @@ class StatusMessage:
 
   msg: str
   type: Literal["join", "leave"] = "join"
-  timestamp: str = datetime.now().isoformat()
+  timestamp: str = datetime.now(tz=UTC).isoformat()
 
 
 @dataclass
@@ -27,7 +27,7 @@ class PrivateMessage:
   msg: str
   from_: str
   to: str
-  timestamp: str = datetime.now().isoformat()
+  timestamp: str = datetime.now(tz=UTC).isoformat()
 
 
 @dataclass
@@ -37,4 +37,4 @@ class PublicMessage:
   msg: str
   username: str
   room: str
-  timestamp: str = datetime.now().isoformat()
+  timestamp: str = datetime.now(tz=UTC).isoformat()
