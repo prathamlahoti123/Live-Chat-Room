@@ -9,3 +9,21 @@ dependencies = [
     "flask-socketio>=5.5.1",
     "gevent>=25.5.1",
 ]
+
+[dependency-groups]
+test = [
+    "mypy>=1.17.1",
+    "ruff>=0.12.8",
+    "types-flask-socketio>=5.5.0.20250809",
+]
+
+[tool.ruff]
+target-version = "py312"
+lint.extend-select = ["ALL"]
+lint.ignore = ["D100", "INP001"]
+exclude = [".venv/", "app/__pycache__/"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+exclude = [".venv/", "app/__pycache__/"]
