@@ -1,8 +1,8 @@
 from dataclasses import asdict
+from typing import TYPE_CHECKING, TypedDict, cast
 
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request as _request, session
 from flask_socketio import SocketIO, emit, join_room, leave_room
-from werkzeug.middleware.proxy_fix import ProxyFix
 
 # ruff: noqa: I001
 from logger import logger
@@ -10,34 +10,52 @@ from schemas import PrivateMessage, PublicMessage, StatusMessage, User
 from settings import Config
 from utils import generate_guest_username
 
+if TYPE_CHECKING:
+  from flask import Request
+
+  class SocketIORequest(Request):
+    """Wrapper for flask.Request to provide sid attribute for type checking.
+
+    See: https://github.com/miguelgrinberg/Flask-SocketIO/discussions/2085
+    """
+
+    sid: str
+
+
+request = cast("SocketIORequest", _request)
+
+
 # Initialize Flask app
 app = Flask(__name__)
 app.config.from_object(Config)
-
-# Handle reverse proxy headers
-app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
-
-# Initialize SocketIO with appropriate CORS settings
 socketio = SocketIO(
   app,
   cors_allowed_origins=app.config["CORS_ORIGINS"],
-  # logger=True,
-  # engineio_logger=True,
+  logger=app.config["DEBUG"],
+  engineio_logger=app.config["DEBUG"],
 )
 
 
 @socketio.on_error_default
-def default_error_handler(e: Exception) -> None:
+def default_error_handler(e: BaseException) -> None:
   """Handle all namespaces without an explicit error handler."""
   logger.error("Websocket error: %s", str(e))
 
 
+class DbType(TypedDict):
+  """Data type specifying the application's database."""
+
+  users: dict[str, User]
+  rooms: list[str]
+
+
 # In-memory storage
-db: dict[str, dict] = {"users": {}, "rooms": [*app.config["CHAT_ROOMS"]]}
+db: DbType = {"users": {}, "rooms": [*app.config["CHAT_ROOMS"]]}
 
 
 @app.route("/")
 def index() -> str:
+  """Render index page, placing a random name of the user into session."""
   if "username" not in session:
     session["username"] = generate_guest_username()
     logger.info("New user session created: %s", session["username"])
@@ -46,15 +64,16 @@ def index() -> str:
 
 @socketio.event
 def connect() -> None:
+  """Handle websocket connect event."""
   if "username" not in session:
     session["username"] = generate_guest_username()
   if "room" not in session:
     session["room"] = app.config["CHAT_ROOMS"][0]
-  user = User(username=session["username"])
-  db["users"][request.sid] = asdict(user)
+  user = User(session["username"])
+  db["users"][request.sid] = user
   emit(
     "active_users",
-    {"users": [user["username"] for user in db["users"].values()]},
+    {"users": [user.username for user in db["users"].values()]},
     broadcast=True,
   )
   logger.info("User connected: %s", user.username)
@@ -62,20 +81,22 @@ def connect() -> None:
 
 @socketio.event
 def disconnect(reason: str) -> None:
+  """Handle websocket disconnect event."""
   if request.sid not in db["users"]:
     return
-  username = db["users"][request.sid]["username"]
+  username = db["users"][request.sid].username
   del db["users"][request.sid]
   emit(
     "active_users",
-    {"users": [user["username"] for user in db["users"].values()]},
+    {"users": [user.username for user in db["users"].values()]},
     broadcast=True,
   )
   logger.info("User disconnected: %s. Reason: %s", username, reason)
 
 
 @socketio.event
-def join(data: dict) -> None:
+def join(data: dict[str, str]) -> None:
+  """Handle websocket room join event."""
   room = data["room"]
   if room not in db["rooms"]:
     logger.warning("Invalid room join attempt: %s", room)
@@ -86,26 +107,25 @@ def join(data: dict) -> None:
     return
   join_room(room)
   session["room"] = room
-  db["users"][request.sid]["room"] = room
   message = StatusMessage(msg=f"{username} has joined the room.")
-  emit("status", asdict(message), room=room)
+  emit("status", asdict(message), to=room)
   logger.info("User %s joined room: %s", username, room)
 
 
 @socketio.event
-def leave(data: dict) -> None:
+def leave(data: dict[str, str]) -> None:
+  """Handle websocket room leave event."""
   username = session["username"]
   room = data["room"]
   leave_room(room)
-  if request.sid in db["users"]:
-    db["users"][request.sid].pop("room", None)
   message = StatusMessage(msg=f"{username} has left the room.", type="leave")
-  emit("status", asdict(message), room=room)
+  emit("status", asdict(message), to=room)
   logger.info("User %s left room: %s", username, room)
 
 
 @socketio.on("message")
-def handle_message(data: dict) -> None:
+def handle_message(data: dict[str, str]) -> None:
+  """Handle custom websocket event of sending messages."""
   message = data.get("msg", "").strip()
   if not message:
     return
@@ -118,22 +138,22 @@ def handle_message(data: dict) -> None:
     target_user = data.get("target")
     if not target_user:
       return
-    for sid, user_data in db["users"].items():
-      if user_data["username"] == target_user:
-        private_message = PrivateMessage(msg=message, from_=username, to=target_user)
-        emit("private_message", asdict(private_message), room=sid)
+    for sid, user in db["users"].items():
+      if user.username == target_user:
+        private_message = PrivateMessage(message, from_=username, to=target_user)
+        emit("private_message", asdict(private_message), to=sid)
         logger.info("Private message sent: %s -> %s", username, target_user)
         return
     logger.warning("Private message failed - user not found: %", target_user)
 
   else:
     # Regular room message
-    room = data.get("room", "General")
+    room = data.get("room", app.config["DEFAULT_CHAT_ROOM"])
     if room not in db["rooms"]:
       logger.warning("Message to invalid room: %s", room)
       return
-    public_message = PublicMessage(msg=message, username=username, room=room)
-    emit("message", asdict(public_message), room=room)
+    public_message = PublicMessage(message, username, room)
+    emit("message", asdict(public_message), to=room)
     logger.info("Message sent in %s by %s", room, username)
 
 
