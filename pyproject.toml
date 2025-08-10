@@ -13,6 +13,7 @@ dependencies = [
 [dependency-groups]
 test = [
     "mypy>=1.17.1",
+    "pytest>=8.4.1",
     "ruff>=0.12.8",
     "types-flask-socketio>=5.5.0.20250809",
 ]
