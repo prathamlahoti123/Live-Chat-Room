@@ -8,7 +8,7 @@ services:
       - DEBUG=${DEBUG}
       - SECRET_KEY=${SECRET_KEY}
     volumes:
-    - static_data:/app/static
+    - static_data:/chat/app/static
 
   nginx:
     build:
@@ -24,7 +24,7 @@ services:
     ports:
       - ${NGINX_PORT}:${NGINX_PORT}
     volumes:
-      - static_data:/app/static
+      - static_data:/chat/app/static
 
 volumes:
   static_data:
