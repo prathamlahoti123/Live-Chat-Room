@@ -1,0 +1,30 @@
+services:
+  chat:
+    build: .
+    restart: always
+    environment:
+      - APP_HOST=${APP_HOST}
+      - APP_PORT=${APP_PORT}
+      - DEBUG=${DEBUG}
+      - SECRET_KEY=${SECRET_KEY}
+    volumes:
+    - static_data:/app/static
+
+  nginx:
+    build:
+      context: .
+      dockerfile: ./proxy/Dockerfile
+    restart: always
+    environment:
+      - APP_PORT=${APP_PORT}
+      - NGINX_PORT=${NGINX_PORT}
+      - NGINX_HOST=${NGINX_HOST}
+    depends_on:
+      - chat
+    ports:
+      - ${NGINX_PORT}:${NGINX_PORT}
+    volumes:
+      - static_data:/app/static
+
+volumes:
+  static_data:
