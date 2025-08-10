@@ -5,6 +5,7 @@ let roomMessages = {};
 
 // Socket event listeners
 socket.on('connect', () => {
+  highlightActiveRoom('General')
   joinRoom('General');
 });
 
