@@ -18,7 +18,7 @@ server {
   }
 
   location /static/ {
-    alias /app/static/;
+    alias /chat/app/static/;
   }
 
   location /socket.io {
