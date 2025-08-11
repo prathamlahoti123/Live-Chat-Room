@@ -18,15 +18,22 @@ socket.on('message', (data) => {
 });
 
 socket.on('private_message', (data) => {
-  addMessage(data.from_, `[Private] ${data.text}`, 'private');
+  addMessage(data.sender, `[Private] ${data.text}`, 'private');
 });
 
-socket.on('status', (data) => {
-  addMessage('System', data.text, 'system');
+socket.on('status', message => {
+  addMessage('System', message.text, 'system');
 });
 
-socket.on('active_users', (data) => {
-  const userList = document.getElementById('active-users');
+socket.on('chat_history', ({ current_user, messages }) => {
+  messages.forEach(message => {
+    const messageType = current_user === message.username ? "own" : "other"
+    addMessage(message.username, message.text, messageType);
+  });
+});
+
+socket.on('online_users', (data) => {
+  const userList = document.getElementById('online-users');
   userList.innerHTML = data.users
     .map(
       (user) => `
@@ -43,9 +50,9 @@ function addMessage(sender, message, type) {
   if (!roomMessages[currentRoom]) {
     roomMessages[currentRoom] = [];
   }
-  if (type !== "system") {
-    roomMessages[currentRoom].push({ sender, message, type });
-  }
+  // if (type !== "system") {
+  //   roomMessages[currentRoom].push({ sender, message, type });
+  // }
   const chat = document.getElementById('chat');
   const messageDiv = document.createElement('div');
   messageDiv.className = `message ${type}`;
