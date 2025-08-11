@@ -12,17 +12,17 @@ socket.on('connect', () => {
 socket.on('message', (data) => {
   addMessage(
     data.username,
-    data.msg,
+    data.text,
     data.username === username ? 'own' : 'other'
   );
 });
 
 socket.on('private_message', (data) => {
-  addMessage(data.from_, `[Private] ${data.msg}`, 'private');
+  addMessage(data.from_, `[Private] ${data.text}`, 'private');
 });
 
 socket.on('status', (data) => {
-  addMessage('System', data.msg, 'system');
+  addMessage('System', data.text, 'system');
 });
 
 socket.on('active_users', (data) => {
@@ -62,22 +62,15 @@ function sendMessage() {
 
   if (message.startsWith('@')) {
     // Send private message
-    const [target, ...msgParts] = message.substring(1).split(' ');
+    const [receiver, ...msgParts] = message.substring(1).split(' ');
     const privateMsg = msgParts.join(' ');
 
     if (privateMsg) {
-      socket.emit('message', {
-        msg: privateMsg,
-        type: 'private',
-        target: target,
-      });
+      socket.emit('message', { text: privateMsg, type: 'private', receiver: receiver });
     }
   } else {
     // Send room message
-    socket.emit('message', {
-      msg: message,
-      room: currentRoom,
-    });
+    socket.emit('message', { text: message, room: currentRoom });
   }
 
   input.value = '';
