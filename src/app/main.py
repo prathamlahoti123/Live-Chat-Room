@@ -47,10 +47,15 @@ class DbType(TypedDict):
 
   users: dict[str, User]
   rooms: list[str]
+  messages: dict[str, list[PublicMessage]]
 
 
 # In-memory storage
-db: DbType = {"users": {}, "rooms": [*app.config["CHAT_ROOMS"]]}
+db: DbType = {
+  "users": {},
+  "rooms": [*app.config["CHAT_ROOMS"]],
+  "messages": {},
+}
 
 
 @app.route("/")
