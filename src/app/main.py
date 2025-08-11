@@ -54,7 +54,7 @@ class DbType(TypedDict):
 db: DbType = {
   "users": {},
   "rooms": [*app.config["CHAT_ROOMS"]],
-  "messages": {},
+  "messages": {room: [] for room in app.config["CHAT_ROOMS"]},
 }
 
 
@@ -76,11 +76,8 @@ def connect() -> None:
     session["room"] = app.config["CHAT_ROOMS"][0]
   user = User(session["username"])
   db["users"][request.sid] = user
-  emit(
-    "active_users",
-    {"users": [user.username for user in db["users"].values()]},
-    broadcast=True,
-  )
+  online_users = {"users": [user.username for user in db["users"].values()]}
+  emit("active_users", online_users, broadcast=True)
   logger.info("User connected: %s", user.username)
 
 
@@ -91,11 +88,8 @@ def disconnect(reason: str) -> None:
     return
   username = db["users"][request.sid].username
   del db["users"][request.sid]
-  emit(
-    "active_users",
-    {"users": [user.username for user in db["users"].values()]},
-    broadcast=True,
-  )
+  online_users = {"users": [user.username for user in db["users"].values()]}
+  emit("active_users", online_users, broadcast=True)
   logger.info("User disconnected: %s. Reason: %s", username, reason)
 
 
@@ -112,8 +106,15 @@ def join(data: dict[str, str]) -> None:
     return
   join_room(room)
   session["room"] = room
-  message = StatusMessage(text=f"{username} has joined the room.")
-  emit("status", asdict(message), to=room)
+
+  # Notify room members that a new has joined the room
+  status_message = StatusMessage(text=f"{username} has joined the room.")
+  emit("status", asdict(status_message), to=room)
+
+  # Display chat history to the current user only
+  room_messages = [asdict(message) for message in db["messages"][room]]
+  room_data = {"current_user": username, "messages": room_messages}
+  emit("chat_history", room_data, to=request.sid)
   logger.info("User %s joined room: %s", username, room)
 
 
@@ -158,6 +159,7 @@ def handle_message(data: dict[str, str]) -> None:
       logger.warning("Message to invalid room: %s", room)
       return
     public_message = PublicMessage(message, username, room)
+    db["messages"][room].append(public_message)
     emit("message", asdict(public_message), to=room)
     logger.info("Message sent in %s by %s", room, username)
 
