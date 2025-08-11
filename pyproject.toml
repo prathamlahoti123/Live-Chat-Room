@@ -22,12 +22,12 @@ test = [
 target-version = "py312"
 lint.extend-select = ["ALL"]
 lint.ignore = ["D100", "D104", "INP001"]
-exclude = [".venv/", "app/__pycache__/"]
+exclude = [".venv/", "src/app/__pycache__/"]
 
 [tool.mypy]
 python_version = "3.12"
 strict = true
-exclude = [".venv/", "app/__pycache__/"]
+exclude = [".venv/", "src/app/__pycache__/"]
 
 [tool.ruff.lint.per-file-ignores]
 "src/tests/*" = ["D103", "S101"]
