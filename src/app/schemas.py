@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Literal
 
@@ -12,29 +12,34 @@ class User:
 
 
 @dataclass
-class StatusMessage:
+class Message:
+  """Base message interface."""
+
+  text: str
+  timestamp: str = field(
+    default_factory=datetime.now(tz=UTC).isoformat,
+    init=False,
+  )
+
+
+@dataclass
+class StatusMessage(Message):
   """Schema to represent a chat join status message."""
 
-  msg: str
   type: Literal["join", "leave"] = "join"
-  timestamp: str = datetime.now(tz=UTC).isoformat()
 
 
 @dataclass
-class PrivateMessage:
+class PrivateMessage(Message):
   """Schema to represent info about private message."""
 
-  msg: str
-  from_: str
-  to: str
-  timestamp: str = datetime.now(tz=UTC).isoformat()
+  sender: str
+  receiver: str
 
 
 @dataclass
-class PublicMessage:
+class PublicMessage(Message):
   """Schema to represent info about public message."""
 
-  msg: str
   username: str
   room: str
-  timestamp: str = datetime.now(tz=UTC).isoformat()
