@@ -107,7 +107,7 @@ def join(data: dict[str, str]) -> None:
     return
   join_room(room)
   session["room"] = room
-  message = StatusMessage(msg=f"{username} has joined the room.")
+  message = StatusMessage(text=f"{username} has joined the room.")
   emit("status", asdict(message), to=room)
   logger.info("User %s joined room: %s", username, room)
 
@@ -118,7 +118,7 @@ def leave(data: dict[str, str]) -> None:
   username = session["username"]
   room = data["room"]
   leave_room(room)
-  message = StatusMessage(msg=f"{username} has left the room.", type="leave")
+  message = StatusMessage(text=f"{username} has left the room.", type="leave")
   emit("status", asdict(message), to=room)
   logger.info("User %s left room: %s", username, room)
 
@@ -126,7 +126,7 @@ def leave(data: dict[str, str]) -> None:
 @socketio.on("message")
 def handle_message(data: dict[str, str]) -> None:
   """Handle custom websocket event of sending messages."""
-  message = data.get("msg", "").strip()
+  message = data.get("text", "").strip()
   if not message:
     return
 
@@ -135,12 +135,12 @@ def handle_message(data: dict[str, str]) -> None:
 
   if msg_type == "private":
     # Handle private messages
-    target_user = data.get("target")
+    target_user = data.get("receiver")
     if not target_user:
       return
     for sid, user in db["users"].items():
       if user.username == target_user:
-        private_message = PrivateMessage(message, from_=username, to=target_user)
+        private_message = PrivateMessage(message, sender=username, receiver=target_user)
         emit("private_message", asdict(private_message), to=sid)
         logger.info("Private message sent: %s -> %s", username, target_user)
         return
