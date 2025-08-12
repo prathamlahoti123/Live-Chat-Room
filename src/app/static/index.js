@@ -12,12 +12,13 @@ socket.on('message', message => {
   addMessage(
     message.username,
     message.text,
+    message.timestamp,
     message.username === currentUser ? 'own' : 'other'
   );
 });
 
 socket.on('private_message', message => {
-  addMessage(message.sender, `[Private] ${message.text}`, 'private');
+  addMessage(message.sender, `[Private] ${message.text}`, message.timestamp, 'private');
 });
 
 socket.on('status', message => {
@@ -29,6 +30,7 @@ socket.on('chat_history', ({ messages }) => {
     addMessage(
       message.username,
       message.text,
+      message.timestamp,
       currentUser === message.username ? "own" : "other"
     );
   });
@@ -58,7 +60,7 @@ function addSystemMessage(message) {
 
 
 // Message handling
-function addMessage(sender, message, type) {
+function addMessage(sender, message, timestamp, type) {
   const chat = document.getElementById('chat');
   const messageDiv = document.createElement('div');
   messageDiv.className = `message ${type}`;
@@ -75,7 +77,7 @@ function addMessage(sender, message, type) {
 
   const messageTimestamp = document.createElement('span');
   messageTimestamp.className = 'message-timestamp';
-  messageTimestamp.textContent = '2025-10-25 14:43';
+  messageTimestamp.textContent = formatTimestamp(timestamp);
   messageDiv.appendChild(messageTimestamp);
 
   chat.appendChild(messageDiv);
@@ -83,15 +85,15 @@ function addMessage(sender, message, type) {
 }
 
 function sendPrivateMessage(message) {
-  const [receiver, ...msgParts] = message.substring(1).split(' ');
-  const privateMsg = msgParts.join(' ');
-  if (privateMsg) {
-    socket.emit('message', { text: privateMsg, type: 'private', receiver: receiver });
+  const [receiver, ...textParts] = message.substring(1).split(' ');
+  const text = textParts.join(' ');
+  if (text) {
+    socket.emit('message', { text, receiver, type: 'private' });
   }
 }
 
 function sendPublicMessage(message, room) {
-  socket.emit('message', { text: message, room: room });
+  socket.emit('message', { text: message, room });
 }
 
 function sendMessage() {
@@ -128,6 +130,18 @@ function handleKeyPress(event) {
     event.preventDefault();
     sendMessage();
   }
+}
+
+function formatTimestamp(timestamp) {
+  // convert Unix timestamp to milliseconds
+  const date = new Date(timestamp * 1000);
+  return date.toLocaleString("en-US", {
+    month: "long",
+    day: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 // Initialize chat when page loads
