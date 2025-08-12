@@ -15,8 +15,8 @@ class Message:
   """Base message interface."""
 
   text: str
-  timestamp: float = field(
-    default_factory=datetime.now(tz=UTC).timestamp,
+  timestamp: int = field(
+    default_factory=lambda: int(datetime.now(tz=UTC).timestamp()),
     init=False,
   )
 
