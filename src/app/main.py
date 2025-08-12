@@ -77,7 +77,7 @@ def connect() -> None:
   user = User(session["username"])
   db["users"][request.sid] = user
   online_users = {"users": [user.username for user in db["users"].values()]}
-  emit("active_users", online_users, broadcast=True)
+  emit("online_users", online_users, broadcast=True)
   logger.info("User connected: %s", user.username)
 
 
@@ -89,7 +89,7 @@ def disconnect(reason: str) -> None:
   username = db["users"][request.sid].username
   del db["users"][request.sid]
   online_users = {"users": [user.username for user in db["users"].values()]}
-  emit("active_users", online_users, broadcast=True)
+  emit("online_users", online_users, broadcast=True)
   logger.info("User disconnected: %s. Reason: %s", username, reason)
 
 
