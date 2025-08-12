@@ -1,48 +1,61 @@
 let socket = io();
-let currentRoom = 'General';
-let username = document.getElementById('username').textContent;
 
-// Socket event listeners
+let currentRoom = 'General';
+let currentUser = document.getElementById('username').textContent;
+
 socket.on('connect', () => {
   highlightActiveRoom(currentRoom)
   joinRoom(currentRoom);
 });
 
-socket.on('message', (data) => {
+socket.on('message', message => {
   addMessage(
-    data.username,
-    data.text,
-    data.username === username ? 'own' : 'other'
+    message.username,
+    message.text,
+    message.username === currentUser ? 'own' : 'other'
   );
 });
 
-socket.on('private_message', (data) => {
-  addMessage(data.sender, `[Private] ${data.text}`, 'private');
+socket.on('private_message', message => {
+  addMessage(message.sender, `[Private] ${message.text}`, 'private');
 });
 
 socket.on('status', message => {
-  addMessage('System', message.text, 'system');
+  addSystemMessage(message.text);
 });
 
-socket.on('chat_history', ({ current_user, messages }) => {
+socket.on('chat_history', ({ messages }) => {
   messages.forEach(message => {
-    const messageType = current_user === message.username ? "own" : "other"
-    addMessage(message.username, message.text, messageType);
+    addMessage(
+      message.username,
+      message.text,
+      currentUser === message.username ? "own" : "other"
+    );
   });
 });
 
-socket.on('online_users', (data) => {
+socket.on('online_users', data => {
   const userList = document.getElementById('online-users');
   userList.innerHTML = data.users
     .map(
-      (user) => `
-            <div class="user-item" onclick="insertPrivateMessage('${user}')">
-                ${user} ${user === username ? '(you)' : ''}
-            </div>
-        `
+      user => `
+        <div class="user-item" onclick="insertPrivateMessage('${user}')">
+          ${user} ${user === currentUser ? '(you)' : ''}
+        </div>
+      `
     )
     .join('');
 });
+
+
+function addSystemMessage(message) {
+  const chat = document.getElementById('chat');
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `message system`;
+  messageDiv.textContent = `System: ${message}`;
+  chat.appendChild(messageDiv);
+}
+
 
 // Message handling
 function addMessage(sender, message, type) {
@@ -50,60 +63,57 @@ function addMessage(sender, message, type) {
   const messageDiv = document.createElement('div');
   messageDiv.className = `message ${type}`;
 
-  if (type === "system") {
-    messageDiv.textContent = `${sender}: ${message}`;
-    chat.appendChild(messageDiv);
-  } else {
-    const messageAuthor = document.createElement('span');
-    messageAuthor.className = 'message-author';
-    messageAuthor.textContent = `${sender}: `;
+  const messageAuthor = document.createElement('span');
+  messageAuthor.className = 'message-author';
+  messageAuthor.textContent = `${sender}: `;
+  messageDiv.appendChild(messageAuthor);
 
-    const messageText = document.createElement('span');
-    messageText.className = 'message-text';
-    messageText.textContent = message;
+  const messageText = document.createElement('span');
+  messageText.className = 'message-text';
+  messageText.textContent = message;
+  messageDiv.appendChild(messageText);
 
-    const messageTimestamp = document.createElement('span');
-    messageTimestamp.className = 'message-timestamp';
-    messageTimestamp.textContent = '2025-10-25 14:43';
-
-    messageDiv.appendChild(messageAuthor);
-    messageDiv.appendChild(messageText);
-    messageDiv.appendChild(messageTimestamp);
-  }
+  const messageTimestamp = document.createElement('span');
+  messageTimestamp.className = 'message-timestamp';
+  messageTimestamp.textContent = '2025-10-25 14:43';
+  messageDiv.appendChild(messageTimestamp);
 
   chat.appendChild(messageDiv);
   chat.scrollTop = chat.scrollHeight;
 }
 
+function sendPrivateMessage(message) {
+  const [receiver, ...msgParts] = message.substring(1).split(' ');
+  const privateMsg = msgParts.join(' ');
+  if (privateMsg) {
+    socket.emit('message', { text: privateMsg, type: 'private', receiver: receiver });
+  }
+}
+
+function sendPublicMessage(message, room) {
+  socket.emit('message', { text: message, room: room });
+}
+
 function sendMessage() {
   const input = document.getElementById('message');
   const message = input.value.trim();
-
   if (!message) return;
-  if (message.startsWith('@')) {
-    // Send private message
-    const [receiver, ...msgParts] = message.substring(1).split(' ');
-    const privateMsg = msgParts.join(' ');
-    if (privateMsg) {
-      socket.emit('message', { text: privateMsg, type: 'private', receiver: receiver });
-    }
-  } else {
-    // Send room message
-    socket.emit('message', { text: message, room: currentRoom });
-  }
+  message.startsWith('@')
+    ? sendPrivateMessage(message)
+    : sendPublicMessage(message, currentRoom);
   input.value = '';
   input.focus();
 }
 
 function joinRoom(room) {
-  if (room === currentRoom) return false;
+  if (room === currentRoom) return;
   socket.emit('leave', { room: currentRoom });
   currentRoom = room;
   socket.emit('join', { room });
 
   highlightActiveRoom(room);
 
-  // Clear room history
+  // Clear chat window
   const chat = document.getElementById('chat');
   chat.innerHTML = '';
 }
