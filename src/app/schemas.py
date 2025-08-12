@@ -8,7 +8,6 @@ class User:
   """Schema to represent info about user."""
 
   username: str
-  connected_at: str = datetime.now(tz=UTC).isoformat()
 
 
 @dataclass
@@ -16,8 +15,8 @@ class Message:
   """Base message interface."""
 
   text: str
-  timestamp: str = field(
-    default_factory=datetime.now(tz=UTC).isoformat,
+  timestamp: float = field(
+    default_factory=datetime.now(tz=UTC).timestamp,
     init=False,
   )
 
