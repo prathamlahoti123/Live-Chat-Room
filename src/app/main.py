@@ -112,9 +112,10 @@ def join(data: dict[str, str]) -> None:
   emit("status", asdict(status_message), to=room)
 
   # Display chat history to the current user only
-  room_messages = [asdict(message) for message in db["messages"][room]]
-  room_data = {"current_user": username, "messages": room_messages}
-  emit("chat_history", room_data, to=request.sid)
+  room_messages = {
+    "messages": [asdict(message) for message in db["messages"][room]],
+  }
+  emit("chat_history", room_messages, to=request.sid)
   logger.info("User %s joined room: %s", username, room)
 
 
