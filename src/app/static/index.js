@@ -68,6 +68,7 @@ function addMessage(sender, message, timestamp, type) {
   const messageAuthor = document.createElement('span');
   messageAuthor.className = 'message-author';
   messageAuthor.textContent = `${sender}: `;
+  messageAuthor.onclick = () => insertPrivateMessage(sender);
   messageDiv.appendChild(messageAuthor);
 
   const messageText = document.createElement('span');
