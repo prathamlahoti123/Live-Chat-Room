@@ -139,6 +139,10 @@ h2 {
   white-space: nowrap;
 }
 
+.message-author:hover {
+  cursor: pointer;
+}
+
 .message-text {
   flex: 1;
   word-wrap: break-word;
