@@ -9,6 +9,11 @@ services:
       - SECRET_KEY=${SECRET_KEY}
     volumes:
     - static_data:/chat/app/static
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://${FLASK_HOST}:${FLASK_PORT}/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   nginx:
     build:
@@ -20,7 +25,8 @@ services:
       - NGINX_HOST=${NGINX_HOST}
       - NGINX_PORT=${NGINX_PORT}
     depends_on:
-      - app
+      app:
+        condition: service_healthy
     ports:
       - ${NGINX_PORT}:${NGINX_PORT}
     volumes:
