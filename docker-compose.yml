@@ -1,26 +1,26 @@
 services:
-  chat:
+  app:
     build: .
     restart: always
     environment:
-      - APP_HOST=${APP_HOST}
-      - APP_PORT=${APP_PORT}
       - DEBUG=${DEBUG}
+      - FLASK_HOST=${FLASK_HOST}
+      - FLASK_PORT=${FLASK_PORT}
       - SECRET_KEY=${SECRET_KEY}
     volumes:
     - static_data:/chat/app/static
 
   nginx:
     build:
-      context: .
-      dockerfile: ./proxy/Dockerfile
+      context: ./proxy/
     restart: always
     environment:
-      - APP_PORT=${APP_PORT}
-      - NGINX_PORT=${NGINX_PORT}
+      - FLASK_HOST=${FLASK_HOST}
+      - FLASK_PORT=${FLASK_PORT}
       - NGINX_HOST=${NGINX_HOST}
+      - NGINX_PORT=${NGINX_PORT}
     depends_on:
-      - chat
+      - app
     ports:
       - ${NGINX_PORT}:${NGINX_PORT}
     volumes:
