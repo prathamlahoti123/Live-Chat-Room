@@ -1,4 +1,5 @@
 from dataclasses import asdict
+from http import HTTPStatus
 from typing import TYPE_CHECKING, TypedDict, cast
 
 from flask import Flask, Response, render_template, session
@@ -7,7 +8,7 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 
 from app.logger import logger
 from app.schemas import PrivateMessage, PublicMessage, StatusMessage, User
-from app.settings import Config
+from app.settings import settings
 from app.utils import generate_guest_username
 
 if TYPE_CHECKING:
@@ -24,15 +25,13 @@ if TYPE_CHECKING:
 
 request = cast("SocketIORequest", _request)
 
-
-# Initialize Flask app
 app = Flask(__name__)
-app.config.from_object(Config)
+app.config.from_object(settings)
 socketio = SocketIO(
   app,
-  cors_allowed_origins=app.config["CORS_ORIGINS"],
-  logger=app.config["DEBUG"],
-  engineio_logger=app.config["DEBUG"],
+  cors_allowed_origins=settings.CORS_ORIGINS,
+  logger=logger,
+  engineio_logger=logger,
 )
 
 
@@ -53,18 +52,18 @@ class DbType(TypedDict):
 # In-memory storage
 db: DbType = {
   "users": {},
-  "rooms": [*app.config["CHAT_ROOMS"]],
-  "messages": {room: [] for room in app.config["CHAT_ROOMS"]},
+  "rooms": [*settings.CHAT_ROOMS],
+  "messages": {room: [] for room in settings.CHAT_ROOMS},
 }
 
 
 @app.get("/health")
 def health() -> Response:
   """Health-check endpoint."""
-  return Response(status=204, headers={"x-status": "ok"})
+  return Response(status=HTTPStatus.NO_CONTENT, headers={"x-status": "ok"})
 
 
-@app.route("/")
+@app.get("/")
 def index() -> str:
   """Render index page, placing a random name of the user into session."""
   if "username" not in session:
@@ -153,7 +152,11 @@ def handle_message(data: dict[str, str]) -> None:
       return
     for sid, user in db["users"].items():
       if user.username == target_user:
-        private_message = PrivateMessage(message, sender=username, receiver=target_user)
+        private_message = PrivateMessage(
+          message,
+          sender=username,
+          receiver=target_user,
+        )
         emit("private_message", asdict(private_message), to=sid)
         logger.info("Private message sent: %s -> %s", username, target_user)
         return
@@ -161,7 +164,7 @@ def handle_message(data: dict[str, str]) -> None:
 
   else:
     # Regular room message
-    room = data.get("room", app.config["DEFAULT_CHAT_ROOM"])
+    room = data.get("room", settings.DEFAULT_CHAT_ROOM)
     if room not in db["rooms"]:
       logger.warning("Message to invalid room: %s", room)
       return
@@ -172,10 +175,4 @@ def handle_message(data: dict[str, str]) -> None:
 
 
 if __name__ == "__main__":
-  socketio.run(
-    app,
-    host=app.config["APP_HOST"],
-    port=app.config["APP_PORT"],
-    debug=app.config["DEBUG"],
-    use_reloader=app.config["DEBUG"],
-  )
+  socketio.run(app, **settings.socketio_server_kwargs)
