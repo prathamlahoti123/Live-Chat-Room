@@ -1,3 +1,8 @@
+.github/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
 .venv/
-src/app/__pycache__/
 assets/
+src/app/__pycache__/
+src/tests/__pycache__/
