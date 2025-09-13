@@ -3,7 +3,7 @@ import secrets
 from typing import ClassVar
 
 
-class Config:
+class Settings:
   """Application configuration."""
 
   APP_HOST: str = os.getenv("APP_HOST", "0.0.0.0")  # noqa: S104
