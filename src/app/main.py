@@ -73,7 +73,7 @@ def index() -> str:
   return render_template("index.html", username=session["username"], rooms=db["rooms"])
 
 
-@socketio.event
+@socketio.on("connect")
 def connect() -> None:
   """Handle websocket connect event."""
   if "username" not in session:
@@ -87,7 +87,7 @@ def connect() -> None:
   logger.info("User connected: %s", user.username)
 
 
-@socketio.event
+@socketio.on("disconnect")
 def disconnect(reason: str) -> None:
   """Handle websocket disconnect event."""
   if request.sid not in db["users"]:
@@ -99,7 +99,7 @@ def disconnect(reason: str) -> None:
   logger.info("User disconnected: %s. Reason: %s", username, reason)
 
 
-@socketio.event
+@socketio.on("join")
 def join(data: dict[str, str]) -> None:
   """Handle websocket room join event."""
   room = data["room"]
@@ -125,7 +125,7 @@ def join(data: dict[str, str]) -> None:
   logger.info("User %s joined room: %s", username, room)
 
 
-@socketio.event
+@socketio.on("leave")
 def leave(data: dict[str, str]) -> None:
   """Handle websocket room leave event."""
   username = session["username"]
