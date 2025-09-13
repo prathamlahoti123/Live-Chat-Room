@@ -6,6 +6,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH="/chat/:$PYTHONPATH"
 WORKDIR /chat
 COPY ./pyproject.toml ./uv.lock ./
-RUN uv sync --locked
+RUN apk add --no-cache curl && \
+    uv sync --locked
 COPY ./src/ ./
 CMD ["python", "app/main.py"]
