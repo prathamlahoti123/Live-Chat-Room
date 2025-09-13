@@ -1,6 +1,6 @@
 upstream socketio_nodes {
   ip_hash;
-  server chat:${APP_PORT};
+  server ${FLASK_HOST}:${FLASK_PORT};
   # to scale the app, just add more nodes here!
 }
 
@@ -10,7 +10,7 @@ server {
   client_max_body_size 10M;
 
   location / {
-    proxy_pass http://chat:${APP_PORT};
+    proxy_pass http://${FLASK_HOST}:${FLASK_PORT};
     proxy_pass_request_body off;
     proxy_set_header Content-Length "";
     proxy_set_header Host $host;
