@@ -1,7 +1,7 @@
 from dataclasses import asdict
 from typing import TYPE_CHECKING, TypedDict, cast
 
-from flask import Flask, render_template, session
+from flask import Flask, Response, render_template, session
 from flask import request as _request
 from flask_socketio import SocketIO, emit, join_room, leave_room
 
@@ -56,6 +56,12 @@ db: DbType = {
   "rooms": [*app.config["CHAT_ROOMS"]],
   "messages": {room: [] for room in app.config["CHAT_ROOMS"]},
 }
+
+
+@app.get("/health")
+def health() -> Response:
+  """Health-check endpoint."""
+  return Response(status=204, headers={"x-status": "ok"})
 
 
 @app.route("/")
