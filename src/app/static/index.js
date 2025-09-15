@@ -1,6 +1,6 @@
 let socket = io();
 
-let currentRoom = 'General';
+let currentRoom = '';
 let currentUser = document.getElementById('username').textContent;
 
 socket.on('connect', () => {
