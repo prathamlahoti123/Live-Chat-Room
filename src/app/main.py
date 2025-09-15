@@ -77,8 +77,7 @@ def connect() -> None:
   """Handle websocket connect event."""
   if "username" not in session:
     session["username"] = generate_guest_username()
-  if "room" not in session:
-    session["room"] = app.config["CHAT_ROOMS"][0]
+  session["room"] = ""
   user = User(session["username"])
   db["users"][request.sid] = user
   online_users = {"users": [user.username for user in db["users"].values()]}
@@ -96,6 +95,7 @@ def disconnect(reason: str) -> None:
   online_users = {"users": [user.username for user in db["users"].values()]}
   emit("online_users", online_users, broadcast=True)
   logger.info("User disconnected: %s. Reason: %s", username, reason)
+  session.clear()
 
 
 @socketio.on("join")
@@ -109,14 +109,14 @@ def join(data: dict[str, str]) -> None:
   if room == session["room"]:
     logger.info("User %s room is already in %s room", username, room)
     return
-  join_room(room)
   session["room"] = room
+  join_room(room)
 
-  # Notify room members that a new has joined the room
+  # Notify all room members that a new user has joined the room
   status_message = StatusMessage(text=f"{username} has joined the room.")
   emit("status", asdict(status_message), to=room)
 
-  # Display chat history to the current user only
+  # Display chat history to the current user
   room_messages = {
     "messages": [asdict(message) for message in db["messages"][room]],
   }
@@ -130,6 +130,7 @@ def leave(data: dict[str, str]) -> None:
   username = session["username"]
   room = data["room"]
   leave_room(room)
+  session["room"] = ""
   message = StatusMessage(text=f"{username} has left the room.", type="leave")
   emit("status", asdict(message), to=room)
   logger.info("User %s left room: %s", username, room)
