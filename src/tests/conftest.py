@@ -10,6 +10,14 @@ if TYPE_CHECKING:
   from flask_socketio import SocketIOTestClient
 
 
+@pytest.fixture
+def mock_session(monkeypatch: pytest.MonkeyPatch) -> dict[str, str]:
+  """Fixture to mock the Flask session object."""
+  session: dict[str, str] = {}
+  monkeypatch.setattr("app.main.session", session)
+  return session
+
+
 @pytest.fixture(scope="session")
 def http_client() -> Iterator["FlaskClient"]:
   """Fixture to provide a Flask test client."""
@@ -18,36 +26,13 @@ def http_client() -> Iterator["FlaskClient"]:
 
 
 @pytest.fixture
-def socket_client() -> "SocketIOTestClient":
+def socket_client(
+  mock_session: dict[str, str],  # noqa: ARG001
+) -> Iterator["SocketIOTestClient"]:
   """Fixture to provide a Flask-SocketIO test client."""
-  return socketio.test_client(app)
-
-
-# @pytest.fixture(scope="session")
-# def mock_session() -> Iterator[dict[str, str]]:
-#   """Fixture to mock the Flask session."""
-#   with patch("app.main.session", {}) as session:
-#     yield session
-
-
-# @pytest.fixture(scope="session")
-# def monkeysession() -> Iterator[pytest.MonkeyPatch]:
-#   """Session-scoped MonkeyPatch fixture."""
-#   with pytest.MonkeyPatch.context() as mp:
-#     yield mp
-
-
-# @pytest.fixture(scope="session")
-# def mock_session(monkeysession: pytest.MonkeyPatch) -> dict[str, str]:
-#   """Fixture to mock the Flask session."""
-#   session: dict[str, str] = {}
-#   monkeysession.setattr("app.main.session", session)
-#   return session
-
-
-@pytest.fixture
-def mock_session(monkeypatch: pytest.MonkeyPatch) -> dict[str, str]:
-  """Fixture to mock the Flask session."""
-  session: dict[str, str] = {}
-  monkeypatch.setattr("app.main.session", session)
-  return session
+  client = socketio.test_client(app)
+  client.connect()
+  yield client
+  # in some tests we can disconnect the client explicitly
+  if client.is_connected():
+    client.disconnect()
