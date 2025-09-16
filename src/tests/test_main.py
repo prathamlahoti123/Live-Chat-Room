@@ -1,7 +1,9 @@
+import re
 from http import HTTPStatus
 from typing import TYPE_CHECKING
 
 import pytest
+from playwright.sync_api import Page, expect
 
 from app.settings import settings
 
@@ -102,3 +104,9 @@ def test_send_private_message(
   mock_session: dict[str, str],
 ) -> None:
   pass
+
+
+@pytest.mark.e2e
+def test_open_index_page(page: Page) -> None:
+  page.goto("/")
+  expect(page).to_have_title(re.compile("Advanced Real-Time Chat"))
