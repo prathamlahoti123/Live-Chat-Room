@@ -14,6 +14,7 @@ dependencies = [
 test = [
     "mypy>=1.17.1",
     "pytest>=8.4.1",
+    "pytest-playwright>=0.7.1",
     "ruff>=0.12.8",
     "types-flask-socketio>=5.5.0.20250809",
 ]
@@ -28,6 +29,16 @@ exclude = [".venv/"]
 python_version = "3.12"
 strict = true
 exclude = [".venv/"]
+files = "src/"
 
 [tool.ruff.lint.per-file-ignores]
 "src/tests/*" = ["D103", "S101"]
+
+[tool.pytest.ini_options]
+addopts = """
+  --verbose
+  --maxfail=1
+"""
+markers = """
+  e2e: marker for end-to-end tests
+"""
