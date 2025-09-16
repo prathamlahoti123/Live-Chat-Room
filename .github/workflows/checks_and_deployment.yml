@@ -24,17 +24,23 @@ jobs:
         with:
           version: "0.7.13"
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: uv sync --all-groups
 
+      - name: Install Dependencies for Playwright
+        run: uv run playwright install --with-deps
+
       - name: Run Ruff
-        run: uv run ruff check src/
+        run: uv run ruff check
 
       - name: Run Mypy
-        run: uv run mypy src/
+        run: uv run mypy
 
-      - name: Run Pytest
-        run: uv run pytest -vsx src/tests
+      - name: Run all tests except end-to-end tests
+        run: uv run pytest -m "not e2e"
+
+      # - name: Run end-to-end tests
+      #   run: uv run pytest -m e2e
 
       - name: Build Docker Image
         run: docker build . -t alexmahone/flask-socketio-chat:latest
