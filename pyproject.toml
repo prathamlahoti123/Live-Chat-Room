@@ -38,6 +38,7 @@ files = "src/"
 addopts = """
   --verbose
   --maxfail=1
+  --base-url=http://localhost
 """
 markers = """
   e2e: marker for end-to-end tests
